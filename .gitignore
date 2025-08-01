@@ -1,0 +1,36 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Firebase-specific files
+.firebase/                 # Cache e metadados do Firebase CLI
+firebase-debug.log         # Logs de depuração do Firebase CLI
+firebase-adminsdk-*.json   # Chaves de serviço de admin (se usadas localmente)
+.runtimeconfig.json        # Arquivo com as configurações de tempo de execução das Cloud Functions
+.env                       # O arquivo .env principal (além do .env.local)
+
+# Cloud Functions-specific files
+/functions/node_modules    # A pasta node_modules dentro da subpasta functions
+/functions/lib             # Pasta de build das funções (se você usa TypeScript/compilação)
+/functions/.env            # Variáveis de ambiente da função (se você usa arquivos .env lá)
