@@ -18,7 +18,7 @@ Este é um web app full-stack desenvolvido para automatizar a gestão de uma esc
 
 ## Acesso à Demonstração
 
-Para explorar o painel administrativo e a área dos responsáveis, utilize as seguintes credenciais em [link para a demo online].
+Para explorar o painel administrativo e a área dos responsáveis, utilize as seguintes credenciais em https://chute-inicial-webapp.vercel.app/
 
 **Credenciais de Administrador:**
 - **E-mail:** `admin@teste.com`
@@ -28,7 +28,6 @@ Para explorar o painel administrativo e a área dos responsáveis, utilize as se
 Estes são dados de login de uma conta de demonstração em um ambiente não-produtivo, criados exclusivamente para avaliação do projeto. Em uma aplicação real, credenciais de acesso jamais seriam expostas publicamente.
 
 ## Como Executar o Projeto Localmente
-(Instruções detalhadas para outros desenvolvedores)
 1. Clone o repositório: `git clone https://github.com/Eduarddoribeiro/chute-inicial-webapp`
 2. Instale as dependências: `npm install`
 3. Crie um projeto Firebase e configure suas credenciais em um arquivo `.env.local`...
