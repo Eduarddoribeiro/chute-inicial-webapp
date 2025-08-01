@@ -28,7 +28,6 @@ Para explorar o painel administrativo e a área dos responsáveis, utilize as se
 Estes são dados de login de uma conta de demonstração em um ambiente não-produtivo, criados exclusivamente para avaliação do projeto. Em uma aplicação real, credenciais de acesso jamais seriam expostas publicamente.
 
 ## Como Executar o Projeto Localmente
-(Instruções detalhadas para outros desenvolvedores)
 1. Clone o repositório: `git clone https://github.com/Eduarddoribeiro/chute-inicial-webapp`
 2. Instale as dependências: `npm install`
 3. Crie um projeto Firebase e configure suas credenciais em um arquivo `.env.local`...
