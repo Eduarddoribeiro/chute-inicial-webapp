@@ -1,29 +1,28 @@
-//Importações
-
+// Importações
 import { useState } from 'react';
-import { auth, db } from '../../firebase/config'; //Auth - Onde os logins sao gerenciados DB- CHave para o firebase; é onde os dados dos usuarios e alunos estao guardados
-import { signInWithEmailAndPassword } from 'firebase/auth'; //Logar usuario com email e senha
-import { doc, getDoc } from 'firebase/firestore'; //Aponta para o documento especifico do banco de dados; GetDoc - Busca e lê as informações do documento apontado
-import { useNavigate } from 'react-router-dom'; //Permite a navegação de uma página para outra
+import { auth, db } from '../../firebase/config';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 import LogoEscolinha from '../../assets/logo.svg';
-import LoginBackground from '../../assets/login-image.webp'; 
+import LoginBackground from '../../assets/login-image.webp';
 
-export default function Login() { //Define o componente pricipal como Login
-  const [email, setEmail] = useState(''); //Cria variável vazia para armazenar os dados que o usuário digitar, UseState faz ele iniciar vazio.
+export default function Login() {
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState(''); 
-  const navigate = useNavigate(); //Inicia a ferramenta de navegar
+  const [erro, setErro] = useState('');
+  const navigate = useNavigate();
 
-  const handleLogin = async () => { //Função para quando o usuário tentar logar
-    setErro(''); //Limpa possível erro anterior de Login
-    try { //Tenta executar se tudo der certo, se nao pula pro catch
-      const userCredential = await signInWithEmailAndPassword(auth, email, senha); //Usa a ferramenta de Login importada, passa as chaves que foi digitadas
-      const user = userCredential.user; // Se deu certo, armazena as informações de login do usuário
-      console.log('Usuário logado:', user.uid); //Exibe confirmação de login
+  const handleLogin = async () => {
+    setErro('');
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+      const user = userCredential.user;
+      console.log('Usuário logado:', user.uid);
 
       // Buscar dados do usuário no Firestore
-      const userDocRef = doc(db, 'usuarios', user.uid); 
+      const userDocRef = doc(db, 'usuarios', user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
@@ -34,22 +33,30 @@ export default function Login() { //Define o componente pricipal como Login
       const userData = userDocSnap.data();
       console.log('Dados do usuário:', userData);
 
-      // Se for responsável, busca os dados do aluno vinculado
+      // Se for responsável, busca os dados do(s) aluno(s) vinculado(s)
       if (userData.role === 'responsavel') {
-        if (!userData.alunoId) {
-          setErro('Aluno vinculado não encontrado para esse responsável.');
+        // VERIFICA AGORA O CAMPO 'alunoIds' (no plural)
+        if (!userData.alunoIds || userData.alunoIds.length === 0) {
+          setErro('Nenhum aluno vinculado a este responsável.');
           return;
         }
-        const alunoDocRef = doc(db, 'alunos', userData.alunoId.trim());
+
+        // A lógica abaixo é para demonstrar que o(s) ID(s) foram encontrados.
+        // A lógica completa de exibição dos alunos precisa ser implementada no ParentDashboard.
+        console.log('IDs dos alunos vinculados:', userData.alunoIds);
+
+        // Verifica a existência do primeiro aluno vinculado para a demonstração
+        const primeiroAlunoId = userData.alunoIds[0].trim();
+        const alunoDocRef = doc(db, 'alunos', primeiroAlunoId);
         const alunoDocSnap = await getDoc(alunoDocRef);
 
         if (!alunoDocSnap.exists()) {
-          setErro('Aluno vinculado não existe no banco de dados');
+          setErro('O primeiro aluno vinculado não existe no banco de dados');
           return;
         }
 
         const alunoData = alunoDocSnap.data();
-        console.log('Dados do aluno vinculado:', alunoData);
+        console.log('Dados do primeiro aluno vinculado:', alunoData);
       }
 
       if (userData.role === 'admin') {
@@ -61,7 +68,6 @@ export default function Login() { //Define o componente pricipal como Login
       }
     } catch (err) {
       console.error('Erro no login:', err);
-      // Mensagens de erro Firebase mais amigáveis
       if (err.code === 'auth/invalid-email') {
         setErro('Formato de e-mail inválido.');
       } else if (err.code === 'auth/user-disabled') {
@@ -75,22 +81,18 @@ export default function Login() { //Define o componente pricipal como Login
   };
 
   return (
-    // Contêiner principal 
     <div className="flex min-h-screen md:flex-row p-4 sm:p-6 md:p-0">
       
       <div className="w-full md:w-full lg:w-1/2 flex flex-col justify-center items-center bg-white p-8 sm:p-10 md:p-12 lg:p-16">
 
-        {/* Contêiner do Logo e Título */}
         <div className="w-full sm:max-w-sm mx-auto">
           <img src={LogoEscolinha} alt="Logo Escolinha Chute Inicial" className="mx-auto h-16 w-auto" />
           <h2 className="mt-10 text-center text-2xl font-bold tracking-tight text-dark md:text-3xl">Faça o seu login</h2>
           <p className="mt-2 font-medium text-center text-sm text-gray-600">Seja bem-vindo(a)!</p>
         </div>
 
-        {/*Formulário*/}
         <div className="mt-10 w-full sm:max-w-sm mx-auto">
           <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-6">
-            {/*e-mail*/}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-text">Email</label>
               <div className="mt-2">
@@ -107,7 +109,6 @@ export default function Login() { //Define o componente pricipal como Login
               </div>
             </div>
 
-            {/*Senha*/}
             <div>
               <div className="flex items-center justify-between">
                 <label htmlFor="password" className="block text-sm font-medium text-text">Senha</label>
@@ -129,7 +130,6 @@ export default function Login() { //Define o componente pricipal como Login
               </div>
             </div>
 
-            {/* botão login */}
             <div>
               <button
                 type="submit"
@@ -140,14 +140,12 @@ export default function Login() { //Define o componente pricipal como Login
             </div>
           </form>
 
-          {/* mensagem erro */}
           {erro && (
             <p className="mt-4 text-center text-sm text-error">
               {erro}
             </p>
           )}
 
-          {/* link cadastro*/}
           <p className="mt-6 text-center text-sm text-gray-500">
             Não possui uma conta?
             <a href="#" className="font-semibold text-primary hover:text-error ml-1">Contate o Administrador</a>
@@ -155,7 +153,6 @@ export default function Login() { //Define o componente pricipal como Login
         </div>
       </div>
 
-      {/* Coluna Direita imagem  */}
       <div
         className="hidden lg:block lg:w-1/2 bg-cover bg-center"
         style={{ backgroundImage: `url(${LoginBackground})` }}
