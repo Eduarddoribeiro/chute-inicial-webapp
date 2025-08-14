@@ -20,16 +20,6 @@ const db = admin.firestore();
 const auth = admin.auth();
 const FieldValue = admin.firestore.FieldValue;
 
-const generateRandomPassword = (length = 16) => {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
-  let password = "";
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    password += charset[randomIndex];
-  }
-  return password;
-};
-
 // --- ROTA: CRIAR RESPONSÁVEL E ALUNO ---
 app.post('/criarResponsavelAluno', async (req, res) => {
   console.log('Recebido no backend:', req.body);
@@ -44,9 +34,11 @@ app.post('/criarResponsavelAluno', async (req, res) => {
     ) {
       return res.status(400).json({ error: 'Campos obrigatórios faltando' });
     }
+
     let userRecord;
     let uidResponsavel;
     let isNewUser = false;
+
     try {
       userRecord = await auth.getUserByEmail(responsavel.email);
       uidResponsavel = userRecord.uid;
@@ -58,13 +50,17 @@ app.post('/criarResponsavelAluno', async (req, res) => {
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
         isNewUser = true;
-        const randomPassword = generateRandomPassword();
+
+        // Define senha fixa
+        const randomPassword = "teste123";
+
         const user = await auth.createUser({
           email: responsavel.email,
           password: randomPassword,
           displayName: responsavel.nome,
         });
         uidResponsavel = user.uid;
+
         await db.collection('usuarios').doc(uidResponsavel).set({
           nome: responsavel.nome,
           email: responsavel.email,
@@ -77,6 +73,7 @@ app.post('/criarResponsavelAluno', async (req, res) => {
         return res.status(500).json({ error: `Erro de autenticação: ${error.message}` });
       }
     }
+
     const hoje = new Date();
     const nasc = new Date(aluno.dataNascimento);
     if (isNaN(nasc.getTime())) {
@@ -85,6 +82,7 @@ app.post('/criarResponsavelAluno', async (req, res) => {
     let idade = hoje.getFullYear() - nasc.getFullYear();
     const m = hoje.getMonth() - nasc.getMonth();
     if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+
     const alunoRef = await db.collection('alunos').add({
       nome: aluno.nome,
       dataNascimento: aluno.dataNascimento,
@@ -96,13 +94,16 @@ app.post('/criarResponsavelAluno', async (req, res) => {
       dataCadastro: FieldValue.serverTimestamp(),
       ativo: aluno.ativo !== undefined ? aluno.ativo : true,
     });
+
     await db.collection('usuarios').doc(uidResponsavel).update({
       alunoIds: FieldValue.arrayUnion(alunoRef.id),
     });
+
     let successMessage = 'Aluno e responsável cadastrados com sucesso!';
     if (isNewUser) {
-      successMessage += ' Uma senha temporária foi definida para o responsável.';
+      successMessage += ' Uma senha temporária foi definida para o responsável: teste123';
     }
+
     return res.status(200).json({ message: successMessage });
   } catch (error) {
     console.error('Erro na função criarResponsavelAluno:', error);
@@ -212,7 +213,7 @@ app.post('/lancarMensalidadesEmLote', async (req, res) => {
   }
 });
 
-// AQUI ESTÁ A CORREÇÃO FINAL. O código precisa ser exportado dessa forma para o Cloud Functions de 2a geração
+// Exporta para Cloud Functions (2ª geração)
 const api = functions.https.onRequest(app);
 
 module.exports = {

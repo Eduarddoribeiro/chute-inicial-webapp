@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { auth } from "../firebase/config";
 import { signOut, onAuthStateChanged } from "firebase/auth";
@@ -7,21 +7,52 @@ import LogoEscolinha from "../assets/logo.svg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
+  faCalendarWeek,
   faMoneyBillWave,
   faUser,
   faUserCircle,
   faRightFromBracket,
+  faClipboardCheck, // NOVO: Ícone para Frequência
   faBars,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import FeedbackModal from "../components/FeedbackModal";
+
+// Definindo os itens de navegação em um array para facilitar a manutenção
+const navigationItems = [
+  {
+    path: "/responsavel/dashboard",
+    icon: faHome,
+    label: "Início",
+  },
+  {
+    path: "/responsavel/horarios",
+    icon: faCalendarWeek,
+    label: "Horários",
+  },
+  {
+    path: "/responsavel/frequencia", // NOVO: Rota para frequência
+    icon: faClipboardCheck,
+    label: "Frequência",
+  },
+  {
+    path: "/responsavel/pagamentos",
+    icon: faMoneyBillWave,
+    label: "Pagamentos",
+  },
+  {
+    path: "/responsavel/perfil",
+    icon: faUser,
+    label: "Perfil",
+  },
+];
 
 export default function ParentLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [confirmarLogout, setConfirmarLogout] = useState(false);
   const [loggedInUserEmail, setLoggedInUserEmail] = useState("Carregando...");
-  const [feedbackModal, setFeedbackModal] = useState({ // CORRIGIDO: Adicionado o estado 'feedbackModal' que estava faltando
+  const [feedbackModal, setFeedbackModal] = useState({
     show: false,
     message: "",
     type: "",
@@ -40,13 +71,13 @@ export default function ParentLayout() {
     return () => unsubscribe();
   }, [navigate]);
 
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     setIsSidebarOpen(false);
-  };
+  }, []);
 
-  const closeUserMenu = () => {
+  const closeUserMenu = useCallback(() => {
     setIsUserMenuOpen(false);
-  };
+  }, []);
 
   const handleLogout = async () => {
     setConfirmarLogout(false);
@@ -54,7 +85,7 @@ export default function ParentLayout() {
       await signOut(auth);
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      setFeedbackModal({ // CORRIGIDO: Usando FeedbackModal em vez de alert
+      setFeedbackModal({
         show: true,
         message: "Erro ao fazer logout. Tente novamente.",
         type: "error",
@@ -62,9 +93,18 @@ export default function ParentLayout() {
     }
   };
 
+  const toggleSidebar = () => {
+    if (isUserMenuOpen) closeUserMenu();
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const toggleUserMenu = () => {
+    if (isSidebarOpen) closeSidebar();
+    setIsUserMenuOpen(!isUserMenuOpen);
+  };
+
   return (
     <>
-      {/* Cabeçalho */}
       <nav className="fixed z-40 w-full bg-white border-b border-gray-200">
         <div className="px-3 py-3 lg:px-5 lg:pl-3">
           <div className="flex items-center justify-between">
@@ -73,7 +113,7 @@ export default function ParentLayout() {
                 id="toggleSidebarMobile"
                 type="button"
                 className="p-2 text-gray-600 rounded-lg cursor-pointer lg:hidden hover:bg-gray-100 focus:bg-gray-100 focus:ring-2 focus:ring-gray-100"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                onClick={toggleSidebar}
               >
                 <span className="sr-only">Abrir/fechar barra lateral</span>
                 <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faBars} className="w-6 h-6" />
@@ -98,7 +138,7 @@ export default function ParentLayout() {
                   <button
                     type="button"
                     className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300"
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    onClick={toggleUserMenu}
                   >
                     <span className="sr-only">Abrir menu do usuário</span>
                     <FontAwesomeIcon icon={faUserCircle} className="w-7 h-7 text-gray-500" />
@@ -108,6 +148,7 @@ export default function ParentLayout() {
                   className={`absolute right-0 top-full mt-2 z-50 w-48 text-base list-none bg-white divide-y divide-gray-100 rounded shadow ${
                     isUserMenuOpen ? "block" : "hidden"
                   }`}
+                  id="dropdown-2"
                 >
                   <div className="px-4 py-3" role="none">
                     <p className="text-sm text-gray-900" role="none">
@@ -157,36 +198,21 @@ export default function ParentLayout() {
       >
         <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50">
           <ul className="space-y-2 font-medium">
-            <li>
-              <Link
-                to="/responsavel/dashboard"
-                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
-                onClick={closeSidebar}
-              >
-                <FontAwesomeIcon icon={faHome} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
-                <span className="ms-3">Início</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/responsavel/pagamentos"
-                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
-                onClick={closeSidebar}
-              >
-                <FontAwesomeIcon icon={faMoneyBillWave} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
-                <span className="ms-3">Pagamentos</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/responsavel/perfil"
-                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
-                onClick={closeSidebar}
-              >
-                <FontAwesomeIcon icon={faUser} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
-                <span className="ms-3">Perfil</span>
-              </Link>
-            </li>
+            {navigationItems.map((item) => (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
+                  onClick={closeSidebar}
+                >
+                  <FontAwesomeIcon
+                    icon={item.icon}
+                    className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900"
+                  />
+                  <span className="ms-3">{item.label}</span>
+                </Link>
+              </li>
+            ))}
             <li>
               <button
                 onClick={() => {
@@ -195,7 +221,10 @@ export default function ParentLayout() {
                 }}
                 className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group w-full text-left"
               >
-                <FontAwesomeIcon icon={faRightFromBracket} className="shrink-0 w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
+                <FontAwesomeIcon
+                  icon={faRightFromBracket}
+                  className="shrink-0 w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900"
+                />
                 <span className="flex-1 ms-3 whitespace-nowrap">Sair</span>
               </button>
             </li>

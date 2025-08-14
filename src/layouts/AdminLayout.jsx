@@ -12,18 +12,19 @@ import {
   faUserCog,
   faUserCircle,
   faRightFromBracket,
-  faCalendarPlus, // Adicionado para Lançar Mensalidades
-  faBars, // CORRIGIDO: Adicionado faBars
-  faTimes, // CORRIGIDO: Adicionado faTimes
+  faCalendarPlus,
+  faFutbol, 
+  faBars,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
-import FeedbackModal from "../components/FeedbackModal"; // Certifique-se de que o caminho está correto
+import FeedbackModal from "../components/FeedbackModal";
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [confirmarLogout, setConfirmarLogout] = useState(false);
   const [loggedInUserEmail, setLoggedInUserEmail] = useState("Carregando...");
-  const [feedbackModal, setFeedbackModal] = useState({ // Adicionado estado para FeedbackModal
+  const [feedbackModal, setFeedbackModal] = useState({
     show: false,
     message: "",
     type: "",
@@ -56,12 +57,22 @@ export default function AdminLayout() {
       await signOut(auth);
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      setFeedbackModal({ // Usando FeedbackModal para erro de logout
+      setFeedbackModal({
         show: true,
         message: "Erro ao fazer logout. Tente novamente.",
         type: "error",
       });
     }
+  };
+
+  const toggleSidebar = () => {
+    if (isUserMenuOpen) closeUserMenu();
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const toggleUserMenu = () => {
+    if (isSidebarOpen) closeSidebar();
+    setIsUserMenuOpen(!isUserMenuOpen);
   };
 
   return (
@@ -75,10 +86,9 @@ export default function AdminLayout() {
                 id="toggleSidebarMobile"
                 type="button"
                 className="p-2 text-gray-600 rounded-lg cursor-pointer lg:hidden hover:bg-gray-100 focus:bg-gray-100 focus:ring-2 focus:ring-gray-100"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                onClick={toggleSidebar}
               >
                 <span className="sr-only">Abrir/fechar barra lateral</span>
-                {/* CORRIGIDO: Usando faTimes e faBars */}
                 <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faBars} className="w-6 h-6" />
               </button>
               <Link
@@ -101,7 +111,7 @@ export default function AdminLayout() {
                   <button
                     type="button"
                     className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300"
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    onClick={toggleUserMenu}
                   >
                     <span className="sr-only">Abrir menu do usuário</span>
                     <FontAwesomeIcon icon={faUserCircle} className="w-7 h-7 text-gray-500" />
@@ -193,7 +203,17 @@ export default function AdminLayout() {
                 <span className="ms-3">Gerenciar chamadas</span>
               </Link>
             </li>
-            {/* NOVO LINK: Lançar Mensalidades */}
+            {/* NOVO LINK: Gerenciar Treinos */}
+            <li>
+              <Link
+                to="/admin/treinos"
+                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
+                onClick={closeSidebar}
+              >
+                <FontAwesomeIcon icon={faFutbol} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
+                <span className="ms-3">Treinos</span>
+              </Link>
+            </li>
             <li>
               <Link
                 to="/admin/lancar-mensalidades"
