@@ -409,19 +409,19 @@ export default function AdminDashboard() {
                         {aluno.responsavelData?.telefone || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <Link
-                          to={`/admin/alunos/editar/${aluno.id}`}
-                          className="font-medium text-blue-600 hover:underline mr-3"
-                        >
-                          Editar
-                        </Link>
-                        <button
-                          onClick={() => handleOpenConfirmacaoExclusao(aluno)}
-                          className="font-medium text-red-600 hover:underline"
-                        >
-                          Excluir
-                        </button>
-                      </td>
+  <Link
+    to={`/admin/alunos/editar/${aluno.id}`}
+    className="text-blue-600 hover:text-blue-800 mr-3"
+  >
+    <FontAwesomeIcon icon={faPen} />
+  </Link>
+  <button
+    onClick={() => handleOpenConfirmacaoExclusao(aluno)}
+    className="text-red-600 hover:text-red-800"
+  >
+    <FontAwesomeIcon icon={faTrash} />
+  </button>
+</td>
                     </tr>
                   ))}
                 </tbody>

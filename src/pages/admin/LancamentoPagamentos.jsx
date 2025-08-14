@@ -4,7 +4,6 @@ import { db } from '../../firebase/config';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCloudUploadAlt, faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-// Este componente é para a área de administrador
 export default function LancamentoPagamentos() {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState({
@@ -38,7 +37,7 @@ export default function LancamentoPagamentos() {
 
       // 2. Definir dados do pagamento
       const valorMensalidade = 80.0;
-      const dataVencimento = new Date(); // Pode ser ajustado para o próximo mês
+      const dataVencimento = new Date(); 
       const pagamentosCollection = collection(db, "pagamentos");
 
       // 3. Criar um novo documento de pagamento para cada aluno
@@ -47,7 +46,7 @@ export default function LancamentoPagamentos() {
           alunoId: aluno.id,
           responsavelId: aluno.responsavelId || "N/A", // Assume que o aluno tem um responsavelId
           valor: valorMensalidade,
-          dataVencimento: dataVencimento.toISOString().split('T')[0], // Formato YYYY-MM-DD
+          dataVencimento: dataVencimento.toISOString().split('T')[0],
           status: "pendente",
           dataLancamento: new Date().toISOString().split('T')[0],
         })
