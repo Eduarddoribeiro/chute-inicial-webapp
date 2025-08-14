@@ -2,19 +2,24 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
+const crypto = require('crypto');
 
 admin.initializeApp();
 const app = express();
 
-
-app.use(cors({ origin: true }));
+// Configura o CORS para permitir requisições apenas do seu domínio do Vercel
+const corsOptions = {
+  origin: 'https://chute-inicial-webapp.vercel.app',
+  optionsSuccessStatus: 200 
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const db = admin.firestore();
 const auth = admin.auth();
-const FieldValue = admin.firestore.FieldValue; 
+const FieldValue = admin.firestore.FieldValue;
 
-// Função para gerar senha aleatória
 const generateRandomPassword = (length = 16) => {
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
   let password = "";
@@ -25,109 +30,191 @@ const generateRandomPassword = (length = 16) => {
   return password;
 };
 
+// --- ROTA: CRIAR RESPONSÁVEL E ALUNO ---
 app.post('/criarResponsavelAluno', async (req, res) => {
   console.log('Recebido no backend:', req.body);
   try {
     const { aluno, responsavel } = req.body;
-
-    // Validação de Dados de Entrada
     if (!aluno || !responsavel) {
-      console.error('Dados incompletos: aluno ou responsavel faltando');
-      return res.status(400).send({ error: 'Dados incompletos: aluno ou responsavel faltando' });
+      return res.status(400).json({ error: 'Dados incompletos: aluno ou responsavel faltando' });
     }
-
     if (
       !aluno.nome || !aluno.dataNascimento || !aluno.categoria ||
       !responsavel.nome || !responsavel.email || !responsavel.telefone
     ) {
-      console.error('Campos obrigatórios faltando:', { aluno, responsavel });
-      return res.status(400).send({ error: 'Campos obrigatórios faltando' });
+      return res.status(400).json({ error: 'Campos obrigatórios faltando' });
     }
-
-    // verificação e criação/atualização do usuário responsável no firebase auth
     let userRecord;
     let uidResponsavel;
     let isNewUser = false;
-
     try {
       userRecord = await auth.getUserByEmail(responsavel.email);
       uidResponsavel = userRecord.uid;
-      console.log('Usuário responsável encontrado:', uidResponsavel);
-
-  
       await db.collection('usuarios').doc(uidResponsavel).update({
         nome: responsavel.nome,
         email: responsavel.email,
         telefone: responsavel.telefone,
       });
-
     } catch (error) {
-      // se o usuário não existe, cria um novo
       if (error.code === 'auth/user-not-found') {
-        console.log('Usuário responsável não existe, criando novo...');
         isNewUser = true;
-
-        // geração da senha aleatória
-        const randomPassword = generateRandomPassword(); //função para gerar a senha
-
+        const randomPassword = generateRandomPassword();
         const user = await auth.createUser({
           email: responsavel.email,
-          password: randomPassword, // senha gerada aleatoriamente
+          password: randomPassword,
           displayName: responsavel.nome,
         });
         uidResponsavel = user.uid;
-
-        // Cria o documento do usuário na coleção 'usuarios' com a role e array de alunoIds vazio
         await db.collection('usuarios').doc(uidResponsavel).set({
           nome: responsavel.nome,
           email: responsavel.email,
           telefone: responsavel.telefone,
           role: 'responsavel',
-          alunoIds: [], // inicia como um array vazio
-          dataCadastro: FieldValue.serverTimestamp(), 
+          alunoIds: [],
+          dataCadastro: FieldValue.serverTimestamp(),
         });
       } else {
-        console.error('Erro ao buscar/criar usuário no Auth:', error);
-        return res.status(500).send({ error: `Erro de autenticação: ${error.message}` });
+        return res.status(500).json({ error: `Erro de autenticação: ${error.message}` });
       }
     }
-
-    // cálculo da idade do aluno 
     const hoje = new Date();
     const nasc = new Date(aluno.dataNascimento);
+    if (isNaN(nasc.getTime())) {
+      return res.status(400).json({ error: 'Data de nascimento inválida.' });
+    }
     let idade = hoje.getFullYear() - nasc.getFullYear();
     const m = hoje.getMonth() - nasc.getMonth();
     if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
-
-    // criação do documento do aluno na coleção 'alunos'
     const alunoRef = await db.collection('alunos').add({
       nome: aluno.nome,
       dataNascimento: aluno.dataNascimento,
-      idade: idade, //idade calculada
+      idade: idade,
       categoria: aluno.categoria,
       numeroCamisa: aluno.numeroCamisa || '',
-      presencas: [], // presenças é um array vazio
-      responsavelId: uidResponsavel, // vincula o aluno ao UID do responsável
-      dataCadastro: FieldValue.serverTimestamp(), //  timestamp de criação do aluno
-      ativo: aluno.ativo !== undefined ? aluno.ativo : true, //  ativo por padrão, o
+      presencas: [],
+      responsavelId: uidResponsavel,
+      dataCadastro: FieldValue.serverTimestamp(),
+      ativo: aluno.ativo !== undefined ? aluno.ativo : true,
     });
-
-    // vinculação do aluno ao responsável (adiciona o ID do aluno ao array 'alunoIds' do responsável)
     await db.collection('usuarios').doc(uidResponsavel).update({
-      alunoIds: FieldValue.arrayUnion(alunoRef.id), // adiciona o ID do novo aluno ao array
+      alunoIds: FieldValue.arrayUnion(alunoRef.id),
     });
-
-    // 6. Resposta de Sucesso
     let successMessage = 'Aluno e responsável cadastrados com sucesso!';
     if (isNewUser) {
-      successMessage += 'Uma senha temporária foi definida para o responsável, que deverá redefini-la no primeiro acesso.'; 
+      successMessage += ' Uma senha temporária foi definida para o responsável.';
     }
-    return res.status(200).send({ message: successMessage });
-
+    return res.status(200).json({ message: successMessage });
   } catch (error) {
     console.error('Erro na função criarResponsavelAluno:', error);
-    return res.status(500).send({ error: error.message || error.toString() });
+    return res.status(500).json({ error: error.message || error.toString() });
   }
 });
 
-exports.api = functions.https.onRequest(app);
+// --- ROTA: LANÇAR MENSALIDADE ---
+app.post('/lancarMensalidade', async (req, res) => {
+  console.log('Recebido na Cloud Function lancarMensalidade:', req.body);
+  try {
+    const { responsavelId, alunoId, mesReferencia, valor, responsavelEmail, alunoNome } = req.body;
+    if (!responsavelId || !alunoId || !mesReferencia || valor === undefined || valor <= 0 || !responsavelEmail || !alunoNome) {
+      return res.status(400).json({ error: 'Dados incompletos ou inválidos para lançar mensalidade.' });
+    }
+    const existingPaymentSnapshot = await db.collection('pagamentos')
+      .where('alunoId', '==', alunoId)
+      .where('mesReferencia', '==', mesReferencia)
+      .get();
+    if (!existingPaymentSnapshot.empty) {
+      return res.status(409).json({ message: `Mensalidade para ${alunoNome} em ${mesReferencia} já foi lançada.` });
+    }
+    await db.collection('pagamentos').add({
+      alunoId,
+      responsavelId,
+      mesReferencia,
+      valor,
+      status: 'pendente',
+      dataCriacao: FieldValue.serverTimestamp(),
+    });
+    return res.status(200).json({ message: 'Mensalidade lançada com sucesso!' });
+  } catch (error) {
+    console.error('Erro na função lancarMensalidade:', error);
+    return res.status(500).json({ error: error.message || 'Erro ao lançar mensalidade.' });
+  }
+});
+
+// --- ROTA: LANÇAR MENSALIDADES EM LOTE ---
+app.post('/lancarMensalidadesEmLote', async (req, res) => {
+  console.log('Recebido na Cloud Function lancarMensalidadesEmLote:', req.body);
+  try {
+    const { mesReferencia } = req.body;
+    if (!mesReferencia) {
+      return res.status(400).json({ error: 'Mês de referência é obrigatório.' });
+    }
+    const responsaveisQuery = await db.collection('usuarios').where('role', '==', 'responsavel').get();
+    if (responsaveisQuery.empty) {
+      return res.status(200).json({ message: 'Nenhum responsável encontrado para lançamento de mensalidades.' });
+    }
+    const batch = db.batch();
+    let lancamentosCount = 0;
+    let jaExistenteCount = 0;
+    for (const responsavelDoc of responsaveisQuery.docs) {
+      const responsavelData = responsavelDoc.data();
+      const responsavelId = responsavelDoc.id;
+      const alunosQuery = await db.collection('alunos')
+        .where('responsavelId', '==', responsavelId)
+        .where('ativo', '==', true)
+        .get();
+      const alunosAtivos = alunosQuery.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (alunosAtivos.length === 0) {
+        console.log(`Responsável ${responsavelData.nome} (${responsavelId}) não possui alunos ativos. Ignorando.`);
+        continue;
+      }
+      const valorPorAluno = 1.00;
+      for (const aluno of alunosAtivos) {
+        const pagamentoRef = db.collection('pagamentos').doc();
+        const existingPaymentQuery = await db.collection('pagamentos')
+          .where('alunoId', '==', aluno.id)
+          .where('mesReferencia', '==', mesReferencia)
+          .limit(1)
+          .get();
+        if (existingPaymentQuery.empty) {
+          batch.set(pagamentoRef, {
+            alunoId: aluno.id,
+            responsavelId: responsavelId,
+            mesReferencia: mesReferencia,
+            valor: valorPorAluno,
+            status: 'pendente',
+            dataCriacao: FieldValue.serverTimestamp(),
+            alunoNome: aluno.nome,
+            responsavelNome: responsavelData.nome,
+            responsavelEmail: responsavelData.email,
+          });
+          lancamentosCount++;
+        } else {
+          jaExistenteCount++;
+          console.log(`Mensalidade para ${aluno.nome} (${mesReferencia}) já existe. Ignorando.`);
+        }
+      }
+    }
+    if (lancamentosCount > 0) {
+      await batch.commit();
+    }
+    let message = `Lançamento em lote concluído. ${lancamentosCount} mensalidades lançadas.`;
+    if (jaExistenteCount > 0) {
+      message += ` ${jaExistenteCount} mensalidades já existentes foram ignoradas.`;
+    }
+    if (lancamentosCount === 0 && jaExistenteCount > 0) {
+      message = 'Nenhum lançamento de mensalidade foi necessário ou encontrado.';
+    }
+    console.log(message);
+    return res.status(200).json({ message });
+  } catch (error) {
+    console.error('Erro na Cloud Function lancarMensalidadesEmLote:', error);
+    return res.status(500).json({ error: error.message || 'Erro ao lançar mensalidades em lote.' });
+  }
+});
+
+// AQUI ESTÁ A CORREÇÃO FINAL. O código precisa ser exportado dessa forma para o Cloud Functions de 2a geração
+const api = functions.https.onRequest(app);
+
+module.exports = {
+  api
+};

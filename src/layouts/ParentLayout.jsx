@@ -6,24 +6,22 @@ import { signOut, onAuthStateChanged } from "firebase/auth";
 import LogoEscolinha from "../assets/logo.svg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faUsers,
-  faPlus,
-  faChalkboardTeacher,
-  faUserCog,
+  faHome,
+  faMoneyBillWave,
+  faUser,
   faUserCircle,
   faRightFromBracket,
-  faCalendarPlus, // Adicionado para Lançar Mensalidades
-  faBars, // CORRIGIDO: Adicionado faBars
-  faTimes, // CORRIGIDO: Adicionado faTimes
+  faBars,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
-import FeedbackModal from "../components/FeedbackModal"; // Certifique-se de que o caminho está correto
+import FeedbackModal from "../components/FeedbackModal";
 
-export default function AdminLayout() {
+export default function ParentLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [confirmarLogout, setConfirmarLogout] = useState(false);
   const [loggedInUserEmail, setLoggedInUserEmail] = useState("Carregando...");
-  const [feedbackModal, setFeedbackModal] = useState({ // Adicionado estado para FeedbackModal
+  const [feedbackModal, setFeedbackModal] = useState({ // CORRIGIDO: Adicionado o estado 'feedbackModal' que estava faltando
     show: false,
     message: "",
     type: "",
@@ -56,7 +54,7 @@ export default function AdminLayout() {
       await signOut(auth);
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      setFeedbackModal({ // Usando FeedbackModal para erro de logout
+      setFeedbackModal({ // CORRIGIDO: Usando FeedbackModal em vez de alert
         show: true,
         message: "Erro ao fazer logout. Tente novamente.",
         type: "error",
@@ -78,11 +76,10 @@ export default function AdminLayout() {
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               >
                 <span className="sr-only">Abrir/fechar barra lateral</span>
-                {/* CORRIGIDO: Usando faTimes e faBars */}
                 <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faBars} className="w-6 h-6" />
               </button>
               <Link
-                to="/admin/dashboard"
+                to="/responsavel/dashboard"
                 className="flex ml-2 md:mr-24 items-center"
               >
                 <img
@@ -111,11 +108,10 @@ export default function AdminLayout() {
                   className={`absolute right-0 top-full mt-2 z-50 w-48 text-base list-none bg-white divide-y divide-gray-100 rounded shadow ${
                     isUserMenuOpen ? "block" : "hidden"
                   }`}
-                  id="dropdown-2"
                 >
                   <div className="px-4 py-3" role="none">
                     <p className="text-sm text-gray-900" role="none">
-                      Admin
+                      Responsável
                     </p>
                     <p
                       className="text-sm font-medium text-gray-900 truncate"
@@ -145,7 +141,6 @@ export default function AdminLayout() {
         </div>
       </nav>
 
-      {/* Overlay para fechar sidebar em mobile ao clicar fora */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-45 lg:hidden"
@@ -153,7 +148,6 @@ export default function AdminLayout() {
         ></div>
       )}
 
-      {/* Barra Lateral (Sidebar) */}
       <aside
         id="logo-sidebar"
         className={`fixed top-0 left-0 z-50 w-64 h-screen transition-transform ${
@@ -165,56 +159,34 @@ export default function AdminLayout() {
           <ul className="space-y-2 font-medium">
             <li>
               <Link
-                to="/admin/dashboard"
+                to="/responsavel/dashboard"
                 className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
                 onClick={closeSidebar}
               >
-                <FontAwesomeIcon icon={faUsers} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
-                <span className="ms-3">Gestão de alunos</span>
+                <FontAwesomeIcon icon={faHome} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
+                <span className="ms-3">Início</span>
               </Link>
             </li>
             <li>
               <Link
-                to="/admin/cadastrar-responsavel-aluno"
+                to="/responsavel/pagamentos"
                 className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
                 onClick={closeSidebar}
               >
-                <FontAwesomeIcon icon={faPlus} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
-                <span className="ms-3">Cadastrar aluno</span>
+                <FontAwesomeIcon icon={faMoneyBillWave} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
+                <span className="ms-3">Pagamentos</span>
               </Link>
             </li>
             <li>
               <Link
-                to="/admin/historico-frequencia"
+                to="/responsavel/perfil"
                 className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
                 onClick={closeSidebar}
               >
-                <FontAwesomeIcon icon={faChalkboardTeacher} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
-                <span className="ms-3">Gerenciar chamadas</span>
+                <FontAwesomeIcon icon={faUser} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
+                <span className="ms-3">Perfil</span>
               </Link>
             </li>
-            {/* NOVO LINK: Lançar Mensalidades */}
-            <li>
-              <Link
-                to="/admin/lancar-mensalidades"
-                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
-                onClick={closeSidebar}
-              >
-                <FontAwesomeIcon icon={faCalendarPlus} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
-                <span className="ms-3">Lançar Mensalidades</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/admin/criar-admin"
-                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
-                onClick={closeSidebar}
-              >
-                <FontAwesomeIcon icon={faUserCog} className="w-5 h-5 text-gray-500 transition-all group-hover:text-gray-900" />
-                <span className="ms-3">Criar administrador</span>
-              </Link>
-            </li>
-
             <li>
               <button
                 onClick={() => {
@@ -231,14 +203,12 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Área de Conteúdo Principal */}
       <div className="p-4 sm:ml-64 sm:pt-20 lg:pt-24">
         <Outlet />
       </div>
 
-      {/* MODAL DE CONFIRMAÇÃO DE LOGOUT */}
       {confirmarLogout && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-55">
           <div className="relative w-full max-w-md max-h-full">
             <div className="relative bg-white rounded-lg shadow">
               <button
@@ -301,7 +271,6 @@ export default function AdminLayout() {
           </div>
         </div>
       )}
-      {/* Feedback Modal para mensagens de sucesso/erro */}
       {feedbackModal.show && (
         <FeedbackModal
           message={feedbackModal.message}
