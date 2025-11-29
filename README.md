@@ -36,4 +36,4 @@ Estes são dados de login de uma conta de demonstração em um ambiente não-pro
 5. Inicie o servidor de desenvolvimento: `npm run dev`
 
 ## Contato
-- LinkedIn: https://www.linkedin.com/in/carloseduardoribeirodefraga/
+- LinkedIn: https://www.linkedin.com/in/eduardoribeirodefraga/
