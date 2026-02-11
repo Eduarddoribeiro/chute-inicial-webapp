@@ -138,6 +138,14 @@ export default function Login() {
                 Entrar
               </button>
             </div>
+
+            <div className="mt-4 bg-gray-50 p-4 rounded-md border border-gray-200 text-left">
+                <p className="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wide">Acesso Demo (Recrutadores)</p>
+                <div className="text-sm text-gray-700 space-y-1">
+                    <p><span className="font-semibold text-gray-900">Email:</span> admin@teste.com</p>
+                    <p><span className="font-semibold text-gray-900">Senha:</span> chuteinicial123</p>
+                </div>
+            </div>
           </form>
 
           {erro && (
