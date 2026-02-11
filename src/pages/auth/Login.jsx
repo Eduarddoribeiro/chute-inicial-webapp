@@ -1,4 +1,3 @@
-// Importações
 import { useState } from 'react';
 import { auth, db } from '../../firebase/config';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -21,7 +20,6 @@ export default function Login() {
       const user = userCredential.user;
       console.log('Usuário logado:', user.uid);
 
-      // Buscar dados do usuário no Firestore
       const userDocRef = doc(db, 'usuarios', user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
@@ -33,19 +31,17 @@ export default function Login() {
       const userData = userDocSnap.data();
       console.log('Dados do usuário:', userData);
 
-      // Se for responsável, busca os dados do(s) aluno(s) vinculado(s)
+  
       if (userData.role === 'responsavel') {
-        // VERIFICA AGORA O CAMPO 'alunoIds' (no plural)
         if (!userData.alunoIds || userData.alunoIds.length === 0) {
           setErro('Nenhum aluno vinculado a este responsável.');
           return;
         }
 
-        // A lógica abaixo é para demonstrar que o(s) ID(s) foram encontrados.
-        // A lógica completa de exibição dos alunos precisa ser implementada no ParentDashboard.
+
         console.log('IDs dos alunos vinculados:', userData.alunoIds);
 
-        // Verifica a existência do primeiro aluno vinculado para a demonstração
+
         const primeiroAlunoId = userData.alunoIds[0].trim();
         const alunoDocRef = doc(db, 'alunos', primeiroAlunoId);
         const alunoDocSnap = await getDoc(alunoDocRef);
@@ -80,7 +76,7 @@ export default function Login() {
     }
   };
 
-  return (
+return (
     <div className="flex min-h-screen md:flex-row p-4 sm:p-6 md:p-0">
       
       <div className="w-full md:w-full lg:w-1/2 flex flex-col justify-center items-center bg-white p-8 sm:p-10 md:p-12 lg:p-16">
@@ -138,6 +134,13 @@ export default function Login() {
                 Entrar
               </button>
             </div>
+
+            <div className="bg-gray-100 p-3 rounded-md text-center border border-gray-200">
+                <p className="text-xs text-gray-500 font-bold mb-1">DADOS DE ACESSO (DEMO):</p>
+                <p className="text-sm text-gray-700">Email: <span className="font-mono">admin@teste.com</span></p>
+                <p className="text-sm text-gray-700">Senha: <span >chuteinicial123</span></p>
+            </div>
+
           </form>
 
           {erro && (
